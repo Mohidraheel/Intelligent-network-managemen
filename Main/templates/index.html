@@ -16,6 +16,11 @@
       <button id="btnSample" class="btn">Load Sample Logs</button>
       <button id="btnParse" class="btn">Parse TextArea</button>
       <button id="btnSummary" class="btn">Show Summary</button>
+      <button id="btnClear" class="btn" style="background:#d32f2f">Clear All</button>
+
+
+
+
 
       <div class="muted">You may upload a .txt file where each line is a log entry.
         Logs may include timestamps and severity like <code>2024-10-25 10:15:23 [CRITICAL] Router-01: message</code>
@@ -24,18 +29,24 @@
       <textarea id="logsArea" placeholder="Paste logs here or upload a .txt file"></textarea>
       <div id="status" class="status"></div>
     </div>
+    <div class="card">
+  <h2>Chat with Logs AI</h2>
+  <input id="chatInput" type="text" placeholder="Ask something... e.g. show critical" style="width:80%;padding:8px;">
+  <button id="btnChat" class="btn">Send</button>
+  <div id="chatResponse" style="margin-top:10px;color:#333"></div>
+</div>
+
 
     <div class="card" id="summaryCard">
       <h2>Summary</h2>
       <div class="summary">
-        <div class="box">Total: <span id="total">0</span></div>
-        <div class="box">Critical: <span id="critical">0</span></div>
-        <div class="box">Warning: <span id="warning">0</span></div>
-        <div class="box">Info: <span id="info">0</span></div>
+         <div class="box box-total">Total: <span id="total">0</span></div>
+  <div class="box box-critical">Critical: <span id="critical">0</span></div>
+  <div class="box box-warning">Warning: <span id="warning">0</span></div>
+  <div class="box box-info">Info: <span id="info">0</span></div>
       </div>
 
-      <h3>Critical Alerts</h3>
-      <div id="criticalList"><em>None</em></div>
+    
     </div>
   </div>
 
@@ -72,6 +83,47 @@
         el('status').innerText = data.error || JSON.stringify(data);
       }
     }
+    function clearAll() {
+    el('logsArea').value = '';
+    el('status').innerText = '';
+    el('total').innerText = '0';
+    el('critical').innerText = '0';
+    el('warning').innerText = '0';
+    el('info').innerText = '0';
+
+    // If you have chat response div:
+    const chatBox = document.getElementById('chatResponse');
+    if (chatBox) chatBox.innerHTML = '';
+
+    // (Optional) Also tell backend to clear parsed logs
+    fetch(base + '/api/clear', { method: 'POST' });
+}
+
+ 
+
+    async function sendChat(){
+  const msg = el('chatInput').value.trim();
+  if (!msg) return alert("Write a message first!");
+
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ message: msg })
+  });
+
+  const data = await res.json();
+  if (data.logs) {
+    el('chatResponse').innerHTML =
+        `<b>${data.type.toUpperCase()} Logs (${data.count})</b><br><br>` +
+        data.logs.map(l => 
+            `<div>-> <b>${l.device}</b> — ${l.message} <small>(${l.timestamp})</small></div>`
+        ).join("<br>");
+} else {
+    el('chatResponse').innerText = data.message;
+}
+}
+
+el('btnChat').addEventListener('click', sendChat);
 
     async function showSummary(){
       const res = await fetch(base + '/api/summary');
@@ -81,11 +133,6 @@
       el('critical').innerText = data.critical;
       el('warning').innerText = data.warning;
       el('info').innerText = data.info;
-
-      const list = data.critical_logs;
-      if(list && list.length){
-        el('criticalList').innerHTML = '<ul>' + list.map(x=>`<li><strong>${x.device}</strong>: ${x.message} <small>(${x.timestamp})</small></li>`).join('') + '</ul>'
-      } else el('criticalList').innerHTML = '<em>None</em>'
     }
 
     el('fileInput').addEventListener('change', e => {
@@ -105,6 +152,8 @@
     el('btnSample').addEventListener('click', fetchSample);
     el('btnParse').addEventListener('click', parseTextarea);
     el('btnSummary').addEventListener('click', showSummary);
+    el('btnClear').addEventListener('click', clearAll);
+
 
   </script>
 </body>

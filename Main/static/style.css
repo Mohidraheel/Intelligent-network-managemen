@@ -9,5 +9,35 @@ textarea { width:100%; height:220px; margin-top:12px; font-family: monospace; pa
 .muted { color:#666; font-size:13px; margin-top:8px }
 .summary { display:flex; gap:12px; flex-wrap:wrap }
 .box { background:#fafafa; padding:8px 12px; border-radius:8px; border:1px solid #eee }
+/* Base box */
+.box {
+ 
+  font-weight: 600;
+  color: white;
+  min-width: 120px;
+  text-align: center;
+  background:#fafafa; padding:8px 12px; border-radius:8px; border:1px solid #eee
+}
+
+/* Neutral (Total) */
+.box-total {
+  background: #5f6368;   /* gray */
+}
+
+/* CRITICAL – Red */
+.box-critical {
+  background: #d32f2f;
+}
+
+/* WARNING – Orange */
+.box-warning {
+  background: #f9a825;
+  color: #222;
+}
+
+/* INFO – Blue */
+.box-info {
+  background: #1976d2;
+}
 
 
